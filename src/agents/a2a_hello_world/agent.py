@@ -1,5 +1,5 @@
+"""This module defines a simple agent that can get the weather and time."""
 import datetime
-import os
 from zoneinfo import ZoneInfo
 from google.adk.agents import Agent
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
@@ -22,11 +22,10 @@ def get_weather(city: str) -> dict:
                 " Celsius (77 degrees Fahrenheit)."
             ),
         }
-    else:
-        return {
-            "status": "error",
-            "error_message": f"Weather information for '{city}' is not available.",
-        }
+    return {
+        "status": "error",
+        "error_message": f"Weather information for '{city}' is not available.",
+    }
 
 
 def get_current_time(city: str) -> dict:
@@ -39,16 +38,14 @@ def get_current_time(city: str) -> dict:
         dict: status and result or error msg.
     """
 
-    if city.lower() == "new york":
-        tz_identifier = "America/New_York"
-    else:
+    if city.lower() != "new york":
         return {
             "status": "error",
             "error_message": (
                 f"Sorry, I don't have timezone information for {city}."
             ),
         }
-
+    tz_identifier = "America/New_York"
     tz = ZoneInfo(tz_identifier)
     now = datetime.datetime.now(tz)
     report = (
@@ -64,7 +61,8 @@ root_agent = Agent(
         "Agent to answer questions about the time and weather in a city."
     ),
     instruction=(
-        "You are a helpful agent who can answer user questions about the time and weather in a city."
+        "You are a helpful agent who can answer user questions about the time "
+        "and weather in a city."
     ),
     tools=[get_weather, get_current_time],
 )
@@ -72,4 +70,5 @@ root_agent = Agent(
 if __name__ == "__main__":
     import uvicorn
     a2a_app = to_a2a(root_agent, port=8080)
+    # Use host='0.0.0.0' to allow external access.
     uvicorn.run(a2a_app, host='0.0.0.0', port=8080)

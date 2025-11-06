@@ -3,6 +3,5 @@ pip
 autopep8
 
 # App
-flask
 google-adk
 google-cloud-aiplatform
