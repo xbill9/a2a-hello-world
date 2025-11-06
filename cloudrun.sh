@@ -1,4 +1,4 @@
-. $HOME/adk-hello-world/set_env.sh
+. $HOME/a2a-hello-world/set_env.sh
 
 echo adk deploy cloud_run \
 --project=$GOOGLE_CLOUD_PROJECT \

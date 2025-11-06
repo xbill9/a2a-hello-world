@@ -1,6 +1,6 @@
-ADK Hello World
+A2A Hello World
 
-ADK Starter app for deployment across multiple environemnts
+ADK Starter app with A2A for deployment across multiple environemnts
 
 Setup Scripts:
 

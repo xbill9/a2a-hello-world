@@ -57,7 +57,10 @@ export GOOGLE_API_KEY=$user_gemini_key
 
 gcloud config set project $(cat ~/project_id.txt) 
 
-# gcloud auth application-default login
+if ! gcloud auth application-default print-access-token --quiet >/dev/null 2>&1; then
+  echo "--- Running gcloud auth application-default login ---"
+  gcloud auth application-default login
+fi
 
 export PATH=$PATH:$HOME/.local/bin
 

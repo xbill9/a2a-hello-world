@@ -25,6 +25,19 @@ else
   # 'exit 1' would close your current terminal session.
   return 1
 fi
+
+echo "Checking gcloud application-default authentication status..."
+if gcloud auth application-default print-access-token > /dev/null 2>&1; then
+  echo "gcloud application-default is authenticated."
+else
+  echo "Error: gcloud application-default is not authenticated."
+  echo "Attempting to log in with gcloud auth application-default login..."
+  gcloud auth application-default login
+  if [ $? -ne 0 ]; then
+    echo "Error: gcloud auth application-default login failed."
+    return 1
+  fi
+fi
 # --- --- --- --- --- ---
 
 
@@ -81,12 +94,12 @@ export REGION="$GOOGLE_CLOUD_LOCATION"
 echo "Exported REGION=$GOOGLE_CLOUD_LOCATION"
 
 # Set a name for your Cloud Run service (optional)
-export SERVICE_NAME="hello-world-agent-service"
+export SERVICE_NAME="hello-world-a2a-service"
 
 # Set an application name (optional)
-export APP_NAME="hello-world-agent-app"
+export APP_NAME="hello-world-a2a-app"
 
-export AGENT_PATH="$HOME/adk-hello-world/src/agents/adk_hello_world"
+export AGENT_PATH="$HOME/a2a-hello-world/src/agents/adk_hello_world"
 
 echo "Exported AGENT_PATH=$AGENT_PATH"
 
