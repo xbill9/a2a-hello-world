@@ -69,6 +69,7 @@ root_agent = Agent(
     tools=[get_weather, get_current_time],
 )
 
+PUBLIC_URL = os.environ.get("PUBLIC_URL","http://0.0.0.0:8080")
 from agent_to_a2a import to_a2a
 if __name__ == "__main__":
     import uvicorn
