@@ -4,7 +4,7 @@
 cd src/agents/a2a_hello_world
 
 echo `pwd`
-echo adk run .
-adk run .
+echo staring a2a
+python agent.py
 
 
