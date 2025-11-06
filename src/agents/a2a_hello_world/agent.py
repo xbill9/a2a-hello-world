@@ -1,6 +1,9 @@
 import datetime
+import os
 from zoneinfo import ZoneInfo
 from google.adk.agents import Agent
+
+PUBLIC_URL = os.environ.get("PUBLIC_URL")
 
 def get_weather(city: str) -> dict:
     """Retrieves the current weather report for a specified city.
@@ -65,3 +68,9 @@ root_agent = Agent(
     ),
     tools=[get_weather, get_current_time],
 )
+
+from agent_to_a2a import to_a2a
+if __name__ == "__main__":
+    import uvicorn
+    a2a_app = to_a2a(root_agent, port=8080, public_url=PUBLIC_URL)
+    uvicorn.run(a2a_app, host='0.0.0.0', port=8080)

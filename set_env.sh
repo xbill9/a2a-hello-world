@@ -99,9 +99,21 @@ export SERVICE_NAME="hello-world-a2a-service"
 # Set an application name (optional)
 export APP_NAME="hello-world-a2a-app"
 
-export AGENT_PATH="$HOME/a2a-hello-world/src/agents/adk_hello_world"
+export AGENT_PATH="$HOME/a2a-hello-world/src/agents/a2a_hello_world"
+
+
+
+export PUBLIC_URL="http://localhost:8080"
+
+
 
 echo "Exported AGENT_PATH=$AGENT_PATH"
 
-echo "--- Environment setup complete ---"
+
+
+echo "--- Environment setup complete ---
+
+
+
+"
 
