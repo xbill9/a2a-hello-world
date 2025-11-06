@@ -1,6 +1,6 @@
 . $HOME/a2a-hello-world/set_env.sh
 
-cd src/agents/adk_hello_world
+cd src/agents/a2a_hello_world
 
 echo `pwd`
 echo adk run .
