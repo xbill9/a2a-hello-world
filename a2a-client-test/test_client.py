@@ -1,21 +1,25 @@
+import asyncio
+import logging
 import os
+import sys
 import traceback
 from typing import Any
 from uuid import uuid4
 
-from a2a.client import A2ACardResolver, A2AClient
+import httpx
+from a2a.client import A2AClient, A2ACardResolver
+from a2a.client.errors import A2AClientHTTPError
 from a2a.types import (
-    SendMessageResponse,
+    GetTaskRequest,
     GetTaskResponse,
+    MessageSendParams,
+    SendMessageRequest,
+    SendMessageResponse,
     SendMessageSuccessResponse,
     Task,
-    TaskState,
-    SendMessageRequest,
-    MessageSendParams,
-    GetTaskRequest,
     TaskQueryParams,
+    TaskState,
 )
-import httpx
 
 AGENT_URL = os.getenv("AGENT_URL", "http://localhost:8080")
 
@@ -40,54 +44,58 @@ def create_send_message_payload(
     return payload
 
 
-def print_json_response(response: Any, description: str) -> None:
-    """Helper function to print the JSON representation of a response."""
-    print(f"--- {description} ---")
+def log_json_response(response: Any, description: str) -> None:
+    """Helper function to log the JSON representation of a response."""
+    logging.info(f"--- {description} ---")
     if hasattr(response, "root"):
-        print(f"{response.root.model_dump_json(exclude_none=True)}\n")
+        logging.info(f"{response.root.model_dump_json(exclude_none=True)}\n")
     else:
-        print(f"{response.model_dump(mode='json', exclude_none=True)}\n")
+        logging.info(f"{response.model_dump(mode='json', exclude_none=True)}\n")
 
 
 async def run_single_turn_test(client: A2AClient) -> None:
     """Runs a single-turn non-streaming test."""
 
-    send_message_payload = create_send_message_payload(text="what is the weather in new york")
+    send_message_payload = create_send_message_payload(
+        text="what is the weather in new york"
+    )
     request = SendMessageRequest(
         id=str(uuid4()), params=MessageSendParams(**send_message_payload)
     )
 
-    print("--- ✉️  Single Turn Request ---")
+    logging.info("--- ✉️  Single Turn Request ---")
     # Send Message
     response: SendMessageResponse = await client.send_message(request)
-    print_json_response(response, "📥 Single Turn Request Response")
+    log_json_response(response, "📥 Single Turn Request Response")
     if not isinstance(response.root, SendMessageSuccessResponse):
-        print("received non-success response. Aborting get task ")
+        logging.warning("received non-success response. Aborting get task ")
         return
 
     if not isinstance(response.root.result, Task):
-        print("received non-task response. Aborting get task ")
+        logging.warning("received non-task response. Aborting get task ")
         return
 
     task_id: str = response.root.result.id
-    print("--- ❔ Query Task ---")
+    logging.info("--- ❔ Query Task ---")
     # query the task
     get_request = GetTaskRequest(id=str(uuid4()), params=TaskQueryParams(id=task_id))
     get_response: GetTaskResponse = await client.get_task(get_request)
-    print_json_response(get_response, "📥 Query Task Response")
+    log_json_response(get_response, "📥 Query Task Response")
 
 
 async def run_multi_turn_test(client: A2AClient) -> None:
     """Runs a multi-turn non-streaming test."""
-    print("--- 📝 Multi-Turn Request ---")
+    logging.info("--- 📝 Multi-Turn Request ---")
     # --- First Turn ---
 
-    first_turn_payload = create_send_message_payload(text="what is the time in new york")
+    first_turn_payload = create_send_message_payload(
+        text="what is the time in new york"
+    )
     request1 = SendMessageRequest(
         id=str(uuid4()), params=MessageSendParams(**first_turn_payload)
     )
     first_turn_response: SendMessageResponse = await client.send_message(request1)
-    print_json_response(first_turn_response, "📥 Multi-Turn: First Turn Response")
+    log_json_response(first_turn_response, "📥 Multi-Turn: First Turn Response")
 
     context_id: str | None = None
     if isinstance(first_turn_response.root, SendMessageSuccessResponse) and isinstance(
@@ -98,7 +106,7 @@ async def run_multi_turn_test(client: A2AClient) -> None:
 
         # --- Second Turn (if input required) ---
         if task.status.state == TaskState.input_required and context_id:
-            print("--- 📝 Multi-Turn: Second Turn (Input Required) ---")
+            logging.info("--- 📝 Multi-Turn: Second Turn (Input Required) ---")
             second_turn_payload = create_send_message_payload(
                 " is the same time in hoboken NJ", task.id, context_id
             )
@@ -106,22 +114,23 @@ async def run_multi_turn_test(client: A2AClient) -> None:
                 id=str(uuid4()), params=MessageSendParams(**second_turn_payload)
             )
             second_turn_response = await client.send_message(request2)
-            print_json_response(
+            log_json_response(
                 second_turn_response, "Multi-Turn: Second Turn Response"
             )
         elif not context_id:
-            print(
+            logging.warning(
                 "--- ⚠️ Warning: Could not get context ID from first turn response. ---"
             )
         else:
-            print(
+            logging.info(
                 "--- 🚀 First turn completed, no further input required for this test case. ---"
             )
 
 
 async def main() -> None:
     """Main function to run the tests."""
-    print(f"--- 🔄 Connecting to agent at {AGENT_URL}... ---")
+    logging.basicConfig(level=logging.INFO)
+    logging.info(f"--- 🔄 Connecting to agent at {AGENT_URL}... ---")
     try:
         async with httpx.AsyncClient() as httpx_client:
             # Create a resolver to fetch the agent card
@@ -135,18 +144,26 @@ async def main() -> None:
                 httpx_client=httpx_client,
                 agent_card=agent_card,
             )
-            print("--- ✅ Connection successful. ---")
+            logging.info("--- ✅ Connection successful. ---")
 
             await run_single_turn_test(client)
             await run_multi_turn_test(client)
 
+    except A2AClientHTTPError as e:
+        logging.error(f"--- ❌ A2A Client HTTP error: {e} ---")
+        logging.error(f"Could not connect to the agent at {AGENT_URL}.")
+        logging.error("Please ensure the a2a server is running and accessible.")
+        sys.exit(1)
+    except httpx.ConnectError as e:
+        logging.error(f"--- ❌ Connection error: {e} ---")
+        logging.error(f"Could not connect to the agent at {AGENT_URL}.")
+        logging.error("Please ensure the a2a server is running and accessible.")
+        sys.exit(1)
     except Exception as e:
+        logging.error(f"--- ❌ An unexpected error occurred: {e} ---")
         traceback.print_exc()
-        print(f"--- ❌ An error occurred: {e} ---")
-        print("Ensure the agent server is running.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    import asyncio
-
     asyncio.run(main())
