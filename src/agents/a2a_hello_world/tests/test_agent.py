@@ -1,12 +1,12 @@
-
 import unittest
 import sys
 import os
 
 # Add the parent directory to the Python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from agent import get_weather, get_current_time
+from agent import get_weather, get_current_time  # noqa: E402
+
 
 class TestAgent(unittest.TestCase):
 
@@ -30,5 +30,6 @@ class TestAgent(unittest.TestCase):
         self.assertEqual(response["status"], "error")
         self.assertIn("don't have timezone information", response["error_message"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
