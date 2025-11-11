@@ -49,12 +49,20 @@ if [ ! -f "$PROJECT_FILE_PATH" ]; then
   return 1 # Return 1 as we are sourcing
 fi
 
+
 GEMINI_FILE_PATH=$(eval echo $GEMINI_KEY) # Expand potential ~
-if [ ! -f "$GEMINI_FILE_PATH" ]; then
-  echo "Error: Project file not found at $GEMINI_FILE_PATH"
-  echo "Please create $GEMINI_FILE_PATH containing your Gemini Key."
-  return 1 # Return 1 as we are sourcing
+
+read -p "Are you using a Gemini Key? (y/n): " -n 1 -r
+echo    # (optional) move to a new line
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    if [ ! -f "$GEMINI_FILE_PATH" ]; then
+      echo "Error: Gemini key file not found at $GEMINI_FILE_PATH"
+      echo "Please create $GEMINI_FILE_PATH containing your Gemini Key."
+      return 1 # Return 1 as we are sourcing
+    fi
 fi
+
 
 
 # 2. Set the default gcloud project configuration
