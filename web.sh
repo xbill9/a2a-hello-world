@@ -1,4 +1,4 @@
-. $HOME/a2a-hello-world/set_env.sh
+source $HOME/a2a-hello-world/set_env.sh
 
 cd src/agents
 

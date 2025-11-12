@@ -52,16 +52,6 @@ fi
 
 GEMINI_FILE_PATH=$(eval echo $GEMINI_KEY) # Expand potential ~
 
-read -p "Are you using a Gemini Key? (y/n): " -n 1 -r
-echo    # (optional) move to a new line
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
-    if [ ! -f "$GEMINI_FILE_PATH" ]; then
-      echo "Error: Gemini key file not found at $GEMINI_FILE_PATH"
-      echo "Please create $GEMINI_FILE_PATH containing your Gemini Key."
-      return 1 # Return 1 as we are sourcing
-    fi
-fi
 
 
 

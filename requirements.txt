@@ -7,3 +7,4 @@ black
 # App
 google-adk
 google-cloud-aiplatform
+a2a

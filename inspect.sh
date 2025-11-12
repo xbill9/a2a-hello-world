@@ -1,4 +1,4 @@
 source $HOME/a2a-hello-world/set_env.sh
 
-uv run a2a-client-test/test_client.py
-
+cd ../a2a-inspector
+bash scripts/run.sh
