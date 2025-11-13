@@ -20,10 +20,12 @@ if gcloud auth print-access-token > /dev/null 2>&1; then
   echo "gcloud is authenticated."
 else
   echo "Error: gcloud is not authenticated."
-  echo "Please log in by running: gcloud auth login"
-  # Use 'return 1' instead of 'exit 1' because the script is meant to be sourced.
-  # 'exit 1' would close your current terminal session.
-  return 1
+  echo "Attempting to log in with gcloud auth login..."
+  gcloud auth login
+  if [ $? -ne 0 ]; then
+    echo "Error: gcloud auth login failed."
+    return 1
+  fi
 fi
 
 echo "Checking gcloud application-default authentication status..."
