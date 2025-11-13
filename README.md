@@ -15,9 +15,19 @@ These scripts facilitate running the agent in various modes and environments:
 *   `cli.sh` / `run.sh`: Runs the agent in command-line mode, allowing you to interact with it from your terminal. `run.sh` is an alias for `cli.sh`.
 *   `local.sh`: Runs the agent in a local web server, accessible typically at `http://localhost:8080`.
 *   `web.sh`: Runs the agent in a local web server and automatically opens the UI in your default web browser.
-*   `a2a.sh`: Runs the agent in A2A (Agent-to-Agent) mode, allowing it to interact with other agents.
 *   `api_server.sh`: Runs the agent in API server mode, exposing its functionalities via a RESTful API.
 *   `cloudrun.sh`: Deploys the agent as a scalable service to Google Cloud Run, making it accessible publicly.
+
+## Agent-Specific Execution Scripts
+
+These scripts are tailored for specific agents within the project, demonstrating various A2A interactions and functionalities:
+
+*   `a2acard.sh`: Runs the `a2a-agentcard` agent, which handles agent card-related interactions.
+*   `a2aevents.sh`: Executes the `a2a-events` agent, designed for finding events with Google Search Tool.
+*   `a2ahello.sh`: Runs the `a2a-hello-world` agent, a basic example of A2A communication.
+*   `a2amaster.sh`: Starts the `a2a-master-agent`, which orchestrates interactions between other agents.
+*   `a2atest.sh`: A utility script for testing A2A agent functionalities.
+*   `a2aweather.sh`: Runs the `a2a-weather-time` agent, demonstrating tool usage for weather and time information.
 
 ## Agent Details
 
@@ -29,7 +39,7 @@ The core agent logic is defined in `src/agents/a2a_hello_world/agent.py`. This s
 
 ## A2A Protocol Integration
 
-This project highlights the integration of the Agent-to-Agent (A2A) protocol, enabling seamless communication between different agents. The `a2a.sh` script is specifically designed to run the agent in A2A mode, allowing it to send and receive messages from other agents. This setup is crucial for building complex multi-agent systems where specialized agents collaborate to achieve a larger goal. The `a2a-hello-world` agent, while simple, provides a clear example of how to expose an agent's capabilities for inter-agent communication using the ADK framework.
+This project highlights the integration of the Agent-to-Agent (A2A) protocol, enabling seamless communication between different agents. The agent-specific scripts (e.g., `a2ahello.sh`, `a2aweather.sh`) are designed to run agents in A2A mode, allowing them to send and receive messages from other agents. This setup is crucial for building complex multi-agent systems where specialized agents collaborate to achieve a larger goal. The `a2a-hello-world` agent, while simple, provides a clear example of how to expose an agent's capabilities for inter-agent communication using the ADK framework.
 
 ## Development
 
