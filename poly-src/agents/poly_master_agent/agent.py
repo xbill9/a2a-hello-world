@@ -1,0 +1,54 @@
+from google.adk.agents.remote_a2a_agent import AGENT_CARD_WELL_KNOWN_PATH
+from google.adk.agents.remote_a2a_agent import RemoteA2aAgent
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.tools import load_memory
+from google.adk.tools.tool_context import ToolContext
+from google.adk.a2a.utils.agent_to_a2a import to_a2a
+import os
+import uvicorn
+
+# poly master is running on 8085
+# Go Prime checker is on 8086
+# Python random agent is on 8087
+
+
+primecheck_agent = RemoteA2aAgent(
+    name="primecheck_agent",
+    description="This agent written in Go checks for primes",
+    agent_card=(
+        f"http://127.0.0.1:8086/{AGENT_CARD_WELL_KNOWN_PATH}"
+    ),
+)
+
+hw_agent = RemoteA2aAgent(
+    name="helloworld_agent",
+    description="Hello World Agent written in Python",
+    agent_card=(
+        f"http://127.0.0.1:8083/{AGENT_CARD_WELL_KNOWN_PATH}"
+    ),
+)
+
+rand_agent = RemoteA2aAgent(
+    name="rand_agent",
+    description="Random Number Agent written in Python",
+    agent_card=(
+        f"http://127.0.0.1:8087/{AGENT_CARD_WELL_KNOWN_PATH}"
+    ),
+)
+
+root_agent = LlmAgent(
+    name="master_agent",
+    model="gemini-2.5-flash",
+    instruction="""
+        You are the Master Agent
+        you delegate to your sub agents by the a2a protocol
+
+    """,
+    sub_agents=[primecheck_agent,hw_agent,rand_agent]
+)
+
+if __name__ == "__main__":
+    a2a_app = to_a2a(root_agent, port=8085)
+    # Use host='0.0.0.0' to allow external access.
+    uvicorn.run(a2a_app, host="0.0.0.0", port=8085)
+
