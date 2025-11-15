@@ -9,7 +9,11 @@ import uvicorn
 
 # poly master is running on 8085
 # Go Prime checker is on 8086
-# Python random agent is on 8087
+# Python random number agent is on 8087
+# FUTURE Rust Prime Generator is on 8088
+# FUTURE 8089 TBD
+# FUTURE Java number factor is on 8090
+# Node Prime Generator is on 8091
 
 
 primecheck_agent = RemoteA2aAgent(
@@ -20,11 +24,11 @@ primecheck_agent = RemoteA2aAgent(
     ),
 )
 
-hw_agent = RemoteA2aAgent(
-    name="helloworld_agent",
-    description="Hello World Agent written in Python",
+gen_agent = RemoteA2aAgent(
+    name="primegenerator_agent",
+    description="Prime Generation Agent written in JS",
     agent_card=(
-        f"http://127.0.0.1:8083/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://127.0.0.1:8091/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
@@ -44,7 +48,7 @@ root_agent = LlmAgent(
         you delegate to your sub agents by the a2a protocol
 
     """,
-    sub_agents=[primecheck_agent,hw_agent,rand_agent]
+    sub_agents=[primecheck_agent,gen_agent,rand_agent]
 )
 
 if __name__ == "__main__":
