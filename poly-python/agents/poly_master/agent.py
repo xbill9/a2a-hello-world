@@ -46,6 +46,10 @@ root_agent = LlmAgent(
     instruction="""
         You are the Master Agent
         you delegate to your sub agents by the a2a protocol
+        If the user asks to check primes, delegate to the primecheck_agent.
+        If the user asks to generate a random number and then check if the result is prime, call rand_agent first, then pass the result to primecheck_agent.
+        If the user asks to generate a random number and check if the number is prime, call rand_agent first, then pass the result to primecheck_agent.
+        If the users asks to generate a random number and check if it is prime, call rand_agent first then pass the result to primecheck_agent.
 
     """,
     sub_agents=[primecheck_agent,gen_agent,rand_agent]
