@@ -103,7 +103,7 @@ func main() {
 	launcher := web.NewLauncher(a2a.NewLauncher())
 	_, err = launcher.Parse([]string{
 		"--port", strconv.Itoa(port),
-		"a2a", "--a2a_agent_url", "http://localhost:" + strconv.Itoa(port),
+		"a2a", "--a2a_agent_url", "http://0.0.0.0:" + strconv.Itoa(port),
 	})
 	if err != nil {
 		log.Fatalf("launcher.Parse() error = %v", err)
