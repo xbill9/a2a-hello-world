@@ -18,15 +18,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 
+	"google.golang.org/adk/agent"
 	"google.golang.org/adk/agent/llmagent"
-	"google.golang.org/adk/cmd/launcher/adk"
-	"google.golang.org/adk/cmd/launcher/web"
-	"google.golang.org/adk/cmd/launcher/web/a2a"
+	"google.golang.org/adk/cmd/launcher"
+	"google.golang.org/adk/cmd/launcher/prod"
 	"google.golang.org/adk/model/gemini"
-	"google.golang.org/adk/server/restapi/services"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool"
 	"google.golang.org/adk/tool/functiontool"
@@ -50,7 +50,7 @@ type checkPrimeToolArgs struct {
 	Nums []int `json:"nums" jsonschema:"A list of numbers to check for primality."`
 }
 
-func checkPrimeTool(tc tool.Context, args checkPrimeToolArgs) string {
+func checkPrimeTool(tc tool.Context, args checkPrimeToolArgs) (string, error) {
 	var primes []int
 	for _, num := range args.Nums {
 		if isPrime(num) {
@@ -58,13 +58,33 @@ func checkPrimeTool(tc tool.Context, args checkPrimeToolArgs) string {
 		}
 	}
 	if len(primes) == 0 {
-		return "No prime numbers found."
+		return "No prime numbers found.", nil
 	}
 	var primeStrings []string
 	for _, p := range primes {
 		primeStrings = append(primeStrings, strconv.Itoa(p))
 	}
-	return fmt.Sprintf("%s are prime numbers.", strings.Join(primeStrings, ", "))
+	return fmt.Sprintf("%s are prime numbers.", strings.Join(primeStrings, ", ")), nil
+}
+
+// SingleAgentLoader is a simple implementation of agent.Loader for a single agent.
+type SingleAgentLoader struct {
+	Agent agent.Agent
+}
+
+func (l *SingleAgentLoader) LoadAgent(name string) (agent.Agent, error) {
+	if name == l.Agent.Name() {
+		return l.Agent, nil
+	}
+	return nil, fmt.Errorf("agent not found: %s", name)
+}
+
+func (l *SingleAgentLoader) ListAgents() []string {
+	return []string{l.Agent.Name()}
+}
+
+func (l *SingleAgentLoader) RootAgent() agent.Agent {
+	return l.Agent
 }
 
 // --8<-- [start:a2a-launcher]
@@ -98,26 +118,37 @@ func main() {
 		log.Fatalf("Failed to create agent: %v", err)
 	}
 
-	// Create launcher. The a2a.NewLauncher() will dynamically generate the agent card.
-	port := 8086
-	launcher := web.NewLauncher(a2a.NewLauncher())
-	_, err = launcher.Parse([]string{
-		"--port", strconv.Itoa(port),
-		"a2a", "--a2a_agent_url", "http://0.0.0.0:" + strconv.Itoa(port),
-	})
-	if err != nil {
-		log.Fatalf("launcher.Parse() error = %v", err)
+	// Create launcher.
+	l := prod.NewLauncher()
+
+	// Allow PORT to be set by the environment (e.g., Cloud Run), default to 8086
+	portStr := os.Getenv("PORT")
+	if portStr == "" {
+		portStr = "8086"
 	}
+	// Set PORT env var for the launcher to pick up
+	os.Setenv("PORT", portStr)
 
 	// Create ADK config
-	config := &adk.Config{
-		AgentLoader:    services.NewSingleAgentLoader(primeAgent),
+	config := &launcher.Config{
+		AgentLoader:    &SingleAgentLoader{Agent: primeAgent},
 		SessionService: session.InMemoryService(),
 	}
 
-	log.Printf("Starting A2A prime checker server on port %d\n", port)
+	log.Printf("Starting A2A prime checker server on port %s\n", portStr)
+
+	// Arguments for the launcher.
+	// Note: ParseAndRun usually expects the first argument to be the program name if it parses full os.Args,
+	// but here we are constructing args manually.
+	// If full launcher uses standard flag parsing, it might expect the command "a2a" as a subcommand.
+	args := []string{
+		"--port", portStr,
+		"a2a",
+		"--a2a_agent_url", "http://0.0.0.0:" + portStr,
+	}
+
 	// Run launcher
-	if err := launcher.Run(context.Background(), config); err != nil {
+	if err := l.Execute(ctx, config, args); err != nil {
 		log.Fatalf("launcher.Run() error = %v", err)
 	}
 }

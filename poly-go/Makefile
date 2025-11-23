@@ -14,7 +14,7 @@ all: build
 # Build the project for development
 build:
 	@echo "Building the Go project..."
-	@cd $(APP_DIR) && go get -u ./... && go mod tidy
+	@cd $(APP_DIR) && go mod tidy
 	@cd $(APP_DIR) && go build .
 
 # Run the project
