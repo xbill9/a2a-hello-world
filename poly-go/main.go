@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -89,18 +89,28 @@ func (l *SingleAgentLoader) RootAgent() agent.Agent {
 
 // --8<-- [start:a2a-launcher]
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	ctx := context.Background()
 	primeTool, err := functiontool.New(functiontool.Config{
 		Name:        "prime_checking",
 		Description: "Check if numbers in a list are prime using efficient mathematical algorithms",
 	}, checkPrimeTool)
 	if err != nil {
-		log.Fatalf("Failed to create prime_checking tool: %v", err)
+		slog.Error("Failed to create prime_checking tool", "error", err)
+		os.Exit(1)
 	}
 
-	model, err := gemini.NewModel(ctx, "gemini-2.5-flash", &genai.ClientConfig{})
+	modelName := os.Getenv("MODEL_NAME")
+	if modelName == "" {
+		modelName = "gemini-2.5-flash"
+	}
+
+	model, err := gemini.NewModel(ctx, modelName, &genai.ClientConfig{})
 	if err != nil {
-		log.Fatalf("Failed to create model: %v", err)
+		slog.Error("Failed to create model", "error", err)
+		os.Exit(1)
 	}
 
 	primeAgent, err := llmagent.New(llmagent.Config{
@@ -115,7 +125,8 @@ func main() {
 		Tools: []tool.Tool{primeTool},
 	})
 	if err != nil {
-		log.Fatalf("Failed to create agent: %v", err)
+		slog.Error("Failed to create agent", "error", err)
+		os.Exit(1)
 	}
 
 	// Create launcher.
@@ -135,7 +146,7 @@ func main() {
 		SessionService: session.InMemoryService(),
 	}
 
-	log.Printf("Starting A2A prime checker server on port %s\n", portStr)
+	slog.Info("Starting A2A prime checker server", "port", portStr)
 
 	// Arguments for the launcher.
 	// Note: ParseAndRun usually expects the first argument to be the program name if it parses full os.Args,
@@ -149,7 +160,8 @@ func main() {
 
 	// Run launcher
 	if err := l.Execute(ctx, config, args); err != nil {
-		log.Fatalf("launcher.Run() error = %v", err)
+		slog.Error("launcher.Run() error", "error", err)
+		os.Exit(1)
 	}
 }
 
