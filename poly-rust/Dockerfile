@@ -10,7 +10,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 
 # Build dependencies first. This layer is cached if Cargo.toml and Cargo.lock don't change.
-RUN cargo build --release --locked --target x86_64-unknown-linux-gnu --jobs $(nproc)
+RUN cargo build --release --locked --jobs $(nproc)
 
 # Use a minimal base image for the final stage
 FROM gcr.io/distroless/cc-debian12
@@ -19,25 +19,10 @@ FROM gcr.io/distroless/cc-debian12
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
-COPY --from=builder /app/target/x86_64-unknown-linux-gnu/release/logging-client-rust .
+COPY --from=builder /app/target/release/a2a-server-rust .
 
 # Expose the port the application listens on
 EXPOSE 8080
 
 # Run the application
-CMD ["./logging-client-rust"]
-
-# Use a minimal base image for the final stage
-FROM gcr.io/distroless/cc-debian12
-
-# Set the working directory
-WORKDIR /app
-
-# Copy the compiled binary from the builder stage
-COPY --from=builder /app/target/x86_64-unknown-linux-gnu/release/logging-client-rust .
-
-# Expose the port the application listens on
-EXPOSE 8080
-
-# Run the application
-CMD ["./logging-client-rust"]
+CMD ["./a2a-server-rust"]

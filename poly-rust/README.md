@@ -34,7 +34,7 @@ This project uses a `Makefile` to simplify common development tasks.
 
 2.  **Run the application locally:**
     ```bash
-    make run
+    make start
     ```
     The server will start on port `8080`.
 
