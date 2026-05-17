@@ -5,7 +5,7 @@ SERVICE_NAME := a2a-server-rust
 REGION := us-central1
 PROJECT_ID := $(shell gcloud config get-value project)
 
-.PHONY: all build run start clean release test lint format check-fmt clippy check docker-build deploy publish doc endpoint status help
+.PHONY: all build run start clean release test lint format check-fmt clippy check docker-build deploy publish doc endpoint status card card-remote help
 
 # The default target
 all: build
@@ -31,15 +31,70 @@ endpoint:
 
 # Check local and remote service status
 status:
+	@echo "--- Project Configuration ---"
+	@echo "Project ID: $(PROJECT_ID)"
+	@echo "Service:    $(SERVICE_NAME)"
+	@echo "Region:     $(REGION)"
+	@echo ""
 	@echo "--- Service Status ---"
-	@echo -n "Local (8080): "
-	@curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/ || echo "OFFLINE"
-	@echo -n "Remote ($(SERVICE_NAME)): "
+	@echo -n "Local (8080):  "
+	@if curl -s -f http://localhost:8080/agentcard > /dev/null; then \
+		NAME=$$(curl -s http://localhost:8080/agentcard | python3 -c "import sys, json; print(json.load(sys.stdin).get('name', 'Unknown'))" 2>/dev/null || echo "Online"); \
+		echo "ONLINE ($$NAME)"; \
+	elif curl -s -f http://localhost:8080/agent-card > /dev/null; then \
+		NAME=$$(curl -s http://localhost:8080/agent-card | python3 -c "import sys, json; print(json.load(sys.stdin).get('name', 'Unknown'))" 2>/dev/null || echo "Online"); \
+		echo "ONLINE ($$NAME)"; \
+	elif curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ | grep -q "200"; then \
+		echo "ONLINE (Root)"; \
+	else \
+		echo "OFFLINE"; \
+	fi
+	@echo -n "Remote (Cloud): "
 	@URL=$$(gcloud run services describe $(SERVICE_NAME) --platform managed --region $(REGION) --format 'value(status.url)' 2>/dev/null); \
 	if [ -n "$$URL" ]; then \
-		curl -s -o /dev/null -w "%{http_code} ($$URL)\n" $$URL; \
+		if curl -s -f $$URL/agentcard > /dev/null; then \
+			NAME=$$(curl -s $$URL/agentcard | python3 -c "import sys, json; print(json.load(sys.stdin).get('name', 'Unknown'))" 2>/dev/null || echo "Online"); \
+			echo "ONLINE ($$NAME) - $$URL"; \
+		elif curl -s -f $$URL/agent-card > /dev/null; then \
+			NAME=$$(curl -s $$URL/agent-card | python3 -c "import sys, json; print(json.load(sys.stdin).get('name', 'Unknown'))" 2>/dev/null || echo "Online"); \
+			echo "ONLINE ($$NAME) - $$URL"; \
+		elif curl -s -o /dev/null -w "%{http_code}" $$URL/ | grep -q "200"; then \
+			echo "ONLINE (Root) - $$URL"; \
+		else \
+			echo "REACHABLE (Non-200) - $$URL"; \
+		fi \
 	else \
 		echo "NOT DEPLOYED"; \
+	fi
+
+# Get the local agent card
+card:
+	@echo "Fetching local agent card..."
+	@if curl -s -f http://localhost:8080/agentcard > /dev/null; then \
+		curl -s http://localhost:8080/agentcard | python3 -m json.tool; \
+	elif curl -s -f http://localhost:8080/agent-card > /dev/null; then \
+		curl -s http://localhost:8080/agent-card | python3 -m json.tool; \
+	else \
+		echo "Error: Local agent not running or card not found at /agentcard or /agent-card"; \
+		exit 1; \
+	fi
+
+# Get the remote agent card
+card-remote:
+	@echo "Fetching remote agent card..."
+	@URL=$$(gcloud run services describe $(SERVICE_NAME) --platform managed --region $(REGION) --format 'value(status.url)' 2>/dev/null); \
+	if [ -n "$$URL" ]; then \
+		if curl -s -f $$URL/agentcard > /dev/null; then \
+			curl -s $$URL/agentcard | python3 -m json.tool; \
+		elif curl -s -f $$URL/agent-card > /dev/null; then \
+			curl -s $$URL/agent-card | python3 -m json.tool; \
+		else \
+			echo "Error: Agent card not found at $$URL/agentcard or $$URL/agent-card"; \
+			exit 1; \
+		fi \
+	else \
+		echo "Error: Service not deployed or URL not found."; \
+		exit 1; \
 	fi
 
 # Clean the project
@@ -121,14 +176,18 @@ help:
 	@echo "    clean        Clean the project"
 	@echo "    release      Build the project for release"
 	@echo "    test         Run tests"
+	@echo "    test-remote  Run remote A2A validation test"
 	@echo "    lint         Lint the code (clippy + fmt check)"
 	@echo "    format       Format the code"
 	@echo "    check-fmt    Check code formatting"
 	@echo "    clippy       Lint the code"
 	@echo "    check        Check the code"
+	@echo "    update       Update dependencies"
 	@echo "    publish      Publish the crate"
 	@echo "    doc          Generate documentation"
 	@echo "    endpoint     Get Cloud Run service endpoint"
 	@echo "    status       Check local and remote service status"
+	@echo "    card         Get the local agent card (pretty-printed)"
+	@echo "    card-remote  Get the remote agent card (pretty-printed)"
 	@echo "    docker-build Build the Docker image"
 	@echo "    deploy       Deploy the A2A agent to Google Cloud Run (via Cloud Build)"

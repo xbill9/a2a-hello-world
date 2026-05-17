@@ -36,8 +36,6 @@ async fn run_server() -> Result<()> {
     let storage = InMemoryTaskStorage::with_push_sender(push_sender);
     let handler = SimpleAgentHandler::with_storage(storage);
 
-    let processor = DefaultRequestProcessor::with_handler(handler);
-
     // Create agent info
     let agent_info = SimpleAgentInfo::new("A2A Rust Agent".to_string(), format!("http://{}", addr))
         .with_description("An A2A agent using the a2a-rs crate".to_string())
@@ -57,9 +55,40 @@ async fn run_server() -> Result<()> {
             Some(vec!["text".to_string()]),
         );
 
+    let processor = DefaultRequestProcessor::with_handler(handler, agent_info.clone());
+
     // Server without authentication
     let server = HttpServer::new(processor, agent_info, addr.clone());
 
     println!("🔗 HTTP server listening on http://{}", addr);
     server.start().await.map_err(|e| anyhow::anyhow!(e))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use a2a_rs::port::AsyncTaskManager;
+
+    #[tokio::test]
+    async fn test_simple_agent_handler_creation() {
+        let handler = SimpleAgentHandler::new();
+        let exists = handler.task_exists("non-existent").await.unwrap();
+        assert!(!exists);
+    }
+
+    #[tokio::test]
+    async fn test_task_creation() {
+        let handler = SimpleAgentHandler::new();
+        let task_id = "test-task";
+        let context_id = "test-context";
+
+        let task = handler.create_task(task_id, context_id).await.unwrap();
+        assert_eq!(task.id, task_id);
+
+        let exists = handler.task_exists(task_id).await.unwrap();
+        assert!(exists);
+
+        let retrieved_task = handler.get_task(task_id, None).await.unwrap();
+        assert_eq!(retrieved_task.id, task_id);
+    }
 }

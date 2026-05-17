@@ -1,16 +1,16 @@
-# Google Cloud Pubsub Rust Client Example
+# A2A Server Rust Agent
 
-This project is an example of how to use the Google Cloud Pub/Sub client in a Rust application.
+This project is a minimal A2A (Agent-to-Agent) server agent implementation in Rust.
 
 ## Project Overview
 
-`pubsub-client-rust` is a sample application that demonstrates how to interact with Google Cloud Pub/Sub from a Rust application. It is designed to be deployed as a containerized application on Google Cloud Run.
+`a2a-server-rust` is a sample application that demonstrates how to implement an A2A agent using the `a2a-rs` crate. It is designed to be deployed as a containerized application on Google Cloud Run and supports the A2A protocol for agentic communication.
 
 ### Key Technologies
 
-*   **Language:** [Rust](https://www.rust-lang.org/)
-*   **Google Cloud Pub/Sub Client:** [google-cloud-pubsub](https://crates.io/crates/google-cloud-pubsub)
-*   **Web Framework:** [Hyper](https://hyper.rs/)
+*   **Language:** [Rust](https://www.rust-lang.org/) (Edition 2024)
+*   **A2A Framework:** [a2a-rs](https://crates.io/crates/a2a-rs)
+*   **Async Runtime:** [Tokio](https://tokio.rs/)
 *   **Containerization:** [Docker](https://www.docker.com/)
 *   **Deployment:** [Google Cloud Run](https://cloud.google.com/run)
 *   **CI/CD:** [Google Cloud Build](https://cloud.google.com/build)
@@ -40,63 +40,40 @@ This project uses a `Makefile` to simplify common development tasks.
 
 ## Development Workflow
 
-The `Makefile` provides targets for common development tasks.
+The `Makefile` provides targets for common development tasks. Run `make help` to see all available targets.
 
-### Building the Project
+### Building and Running
 
-*   **Development Build:**
-    ```bash
-    make build
-    ```
-*   **Release Build:**
-    ```bash
-    make release
-    ```
-
-### Running Locally
-
-```bash
-make run
-```
+*   **Development Build:** `make build`
+*   **Release Build:** `make release`
+*   **Run Locally:** `make start` (starts on port 8080)
+*   **Check Agent Card:** `make card` (requires local server running)
 
 ### Code Quality
 
-*   **Formatting:**
-    ```bash
-    make format
-    ```
-*   **Linting:**
-    ```bash
-    make clippy
-    ```
+*   **Formatting:** `make format`
+*   **Linting:** `make lint` (runs clippy and format check)
+*   **Testing:** `make test`
 
-### Testing
-
-```bash
-make test
-```
-
-## Deployment
+### Deployment
 
 Deployment is handled by Google Cloud Build and defined in `cloudbuild.yaml`.
 
-### Manual Deployment
-
-To manually trigger a deployment, run:
-
+To deploy to Cloud Run:
 ```bash
 make deploy
 ```
 
-This command submits a build to Google Cloud Build, which will:
+This command:
+1.  Submits the build to Google Cloud Build.
+2.  Builds the Docker image using the multi-stage `Dockerfile`.
+3.  Pushes the image to Artifact Registry/GCR.
+4.  Deploys the image to Google Cloud Run.
 
-1.  Build the Docker image (as defined in `Dockerfile`).
-2.  Push the image to Google Container Registry (GCR).
-3.  Deploy the new image to the `cloudrun-rust` service in the `us-central1` region.
+### Remote Validation
 
-### Deployment Process
-
-*   **`Dockerfile`**: A multi-stage Dockerfile is used to create a minimal, secure production image.
-    1.  **Builder Stage:** The Rust code is compiled in a `rust` builder image.
-    2.  **Final Stage:** The compiled binary is copied to a minimal `gcr.io/distroless/cc-debian12` image.
-*   **`cloudbuild.yaml`**: This file defines the Cloud Build pipeline. It takes care of building, pushing, and deploying the container image.
+After deployment, you can verify the remote service:
+*   **Check Status:** `make status`
+*   **Get Endpoint:** `make endpoint`
+*   **Get Remote Agent Card:** `make card-remote`
+*   **Run Remote Tests:** `make test-remote`
