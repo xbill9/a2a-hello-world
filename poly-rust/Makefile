@@ -117,6 +117,11 @@ test-remote:
 	@echo "Running remote A2A validation test..."
 	@python3 tests/test_cloud_run.py
 
+# Run local A2A echo test
+a2a-local:
+	@echo "Running local A2A echo test..."
+	@python3 tests/echo_test.py
+
 # Format the code
 format:
 	@echo "Formatting code..."
@@ -177,6 +182,7 @@ help:
 	@echo "    release      Build the project for release"
 	@echo "    test         Run tests"
 	@echo "    test-remote  Run remote A2A validation test"
+	@echo "    a2a-local    Run local A2A echo test"
 	@echo "    lint         Lint the code (clippy + fmt check)"
 	@echo "    format       Format the code"
 	@echo "    check-fmt    Check code formatting"
