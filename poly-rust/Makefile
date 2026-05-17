@@ -57,6 +57,11 @@ test:
 	@echo "Running tests..."
 	@cargo test
 
+# Run remote validation test
+test-remote:
+	@echo "Running remote A2A validation test..."
+	@python3 tests/test_cloud_run.py
+
 # Format the code
 format:
 	@echo "Formatting code..."
