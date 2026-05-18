@@ -44,7 +44,6 @@ async fn run_server() -> Result<()> {
             "https://example.org".to_string(),
         )
         .with_documentation_url("https://example.org/docs".to_string())
-        .with_streaming()
         .add_comprehensive_skill(
             "echo".to_string(),
             "Echo Skill".to_string(),
@@ -92,4 +91,3 @@ mod tests {
         assert_eq!(retrieved_task.id, task_id);
     }
 }
-
