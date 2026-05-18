@@ -8,6 +8,9 @@ use https://crates.io as a resource to lookup rust crates and libraries.
 
 This document provides a developer-focused overview of the `a2a-server-rust` project, tailored for use with Gemini.
 
+a2a crate:
+https://github.com/a2aproject/a2a-rs/tree/main
+
 ## Project Overview
 
 `a2a-server-rust` is a minimal A2A (Agent-to-Agent) server agent implementation in Rust, designed to be deployed as a containerized application on Google Cloud Run.

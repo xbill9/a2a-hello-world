@@ -8,8 +8,8 @@ async def test_a2a_server():
     
     async with httpx.AsyncClient() as client:
         try:
-            # 1. Test Discovery Endpoint (GET /)
-            response = await client.get(f"{server_url}/")
+            # 1. Test Discovery Endpoint (GET /agent-card or /.well-known/agent-card.json)
+            response = await client.get(f"{server_url}/agent-card")
             if response.status_code == 200:
                 print("✅ Discovery endpoint reachable")
                 info = response.json()
@@ -19,43 +19,45 @@ async def test_a2a_server():
                 print(f"❌ Discovery endpoint failed: {response.status_code}")
                 return
 
-            # 2. Test Create Task (POST /tasks)
-            print("\n🧪 Creating A2A Task...")
-            task_id = "test-task-python"
-            task_payload = {
-                "task_id": task_id,
-                "context_id": "python-validation-context"
+            # 2. Test Message Processing via JSON-RPC (POST / with method tasks/send)
+            print("\n🧪 Sending Echo Message via JSON-RPC...")
+            test_message = "Hello Rust A2A Server! Echo this."
+            rpc_payload = {
+                "jsonrpc": "2.0",
+                "method": "tasks/send",
+                "params": {
+                    "id": "test-task-python",
+                    "message": {
+                        "role": "user",
+                        "parts": [{"kind": "text", "text": test_message}],
+                        "messageId": "msg-python-1",
+                        "kind": "message"
+                    }
+                },
+                "id": 1
             }
-            response = await client.post(f"{server_url}/tasks", json=task_payload)
-            if response.status_code in [200, 201]:
-                print(f"✅ Task '{task_id}' created successfully")
-            else:
-                print(f"❌ Task creation failed: {response.status_code}")
-                print(response.text)
-                return
-
-            # 3. Test Message Processing (POST /tasks/{id}/messages)
-            # The A2A protocol typically expects a JSON body matching the Message domain object
-            print("\n🧪 Sending Echo Message...")
-            message_payload = {
-                "role": "user",
-                "content": [{"text": "Hello Rust A2A Server! Echo this."}]
-            }
-            response = await client.post(
-                f"{server_url}/tasks/{task_id}/messages", 
-                json=message_payload
-            )
+            
+            response = await client.post(f"{server_url}/", json=rpc_payload)
             
             if response.status_code == 200:
                 result = response.json()
+                if "error" in result:
+                    print(f"❌ JSON-RPC Error: {result['error']}")
+                    return
+                
                 print("✅ Message processed")
-                print(f"🔄 Task State: {result.get('state')}")
+                task = result.get('result', {})
+                print(f"🔄 Task State: {task.get('status', {}).get('state')}")
                 
                 # Check for echo response in history
-                history = result.get('history', [])
+                history = task.get('history', [])
                 if history:
-                    last_msg = history[-1]
-                    print(f"🤖 Agent Response: {json.dumps(last_msg, indent=2)}")
+                    agent_msgs = [m for m in history if m.get('role') == 'agent']
+                    if agent_msgs:
+                        last_msg = agent_msgs[-1]
+                        print(f"🤖 Agent Response: {json.dumps(last_msg, indent=2)}")
+                    else:
+                        print("⚠️ No agent response found in history.")
                 else:
                     print("⚠️ No message history returned in the response.")
             else:

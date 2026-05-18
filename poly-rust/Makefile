@@ -120,7 +120,18 @@ test-remote:
 # Run local A2A echo test
 a2a-local:
 	@echo "Running local A2A echo test..."
-	@python3 tests/echo_test.py
+	@python3 tests/echo_test.py http://localhost:8080
+
+# Run remote A2A echo test
+a2a-remote:
+	@echo "Running remote A2A echo test..."
+	@URL=$$(gcloud run services describe $(SERVICE_NAME) --platform managed --region $(REGION) --format 'value(status.url)' 2>/dev/null); \
+	if [ -n "$$URL" ]; then \
+		python3 tests/echo_test.py $$URL; \
+	else \
+		echo "Error: Service not deployed or URL not found."; \
+		exit 1; \
+	fi
 
 # Format the code
 format:
@@ -183,7 +194,9 @@ help:
 	@echo "    test         Run tests"
 	@echo "    test-remote  Run remote A2A validation test"
 	@echo "    a2a-local    Run local A2A echo test"
+	@echo "    a2a-remote   Run remote A2A echo test"
 	@echo "    lint         Lint the code (clippy + fmt check)"
+
 	@echo "    format       Format the code"
 	@echo "    check-fmt    Check code formatting"
 	@echo "    clippy       Lint the code"
