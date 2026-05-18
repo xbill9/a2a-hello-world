@@ -4,12 +4,11 @@ You are a Rust Developer working with Google Cloud.
 You should follow Rust Best practices.
 The recommended language level for rust is 2024.
 
-use https://crates.io as a resource to lookup rust crates and libraries.
+Use [crates.io](https://crates.io) as a resource to lookup rust crates and libraries.
 
 This document provides a developer-focused overview of the `a2a-server-rust` project, tailored for use with Gemini.
 
-a2a crate:
-https://github.com/a2aproject/a2a-rs/tree/main
+a2a crate: [a2a-rs on GitHub](https://github.com/a2aproject/a2a-rs/tree/main)
 
 ## Project Overview
 
@@ -18,11 +17,17 @@ https://github.com/a2aproject/a2a-rs/tree/main
 ### Key Technologies
 
 *   **Language:** [Rust](https://www.rust-lang.org/) (Edition 2024)
-*   **A2A Framework:** [a2a-rs](https://crates.io/crates/a2a-rs)
+*   **A2A Framework:** [a2a-rs](https://crates.io/crates/a2a-rs) (v0.2.0)
 *   **Async Runtime:** [Tokio](https://tokio.rs/)
 *   **Containerization:** [Docker](https://www.docker.com/)
 *   **Deployment:** [Google Cloud Run](https://cloud.google.com/run)
 *   **CI/CD:** [Google Cloud Build](https://cloud.google.com/build)
+
+## Code Structure
+
+- `src/main.rs`: Entry point. Initializes observability, sets up `HttpServer` with `DefaultRequestProcessor`, defines `SimpleAgentInfo`, and adds the `echo` skill.
+- `src/common/simple_agent_handler.rs`: Implements `SimpleAgentHandler`, which delegates to `InMemoryTaskStorage` and implements core A2A traits (`AsyncMessageHandler`, `AsyncTaskManager`, `AsyncNotificationManager`, `AsyncStreamingHandler`).
+- `src/common/mod.rs`: Module declaration for `common`.
 
 ## Getting Started
 
@@ -55,12 +60,14 @@ The `Makefile` provides targets for common development tasks. Run `make help` fo
 
 *   **Build:** `make build` (dev) or `make release` (release)
 *   **Test:** `make test` (unit) or `make test-remote` (remote validation)
+*   **A2A Tests:** `make a2a-local` or `make a2a-remote` (runs Python echo test)
 *   **Quality:** `make lint` (runs clippy and fmt check)
 
 ### Interacting with the Agent
 
 *   **Agent Card:** Use `make card` (local) or `make card-remote` (remote) to inspect the agent's capabilities and metadata.
 *   **Status:** Use `make status` to check if local and remote instances are reachable.
+*   **Endpoint:** Use `make endpoint` to get the Cloud Run service URL.
 
 ## Deployment
 
@@ -74,9 +81,10 @@ make deploy
 ```
 
 This command:
-1.  Builds the Docker image (as defined in `Dockerfile`).
-2.  Pushes the image to the project's container registry.
-3.  Deploys the new image to Google Cloud Run.
+1.  Submits the build to Google Cloud Build.
+2.  Builds the Docker image (as defined in `Dockerfile`).
+3.  Pushes the image to the project's container registry.
+4.  Deploys the new image to Google Cloud Run.
 
 ## Interacting with Gemini
 
@@ -86,3 +94,4 @@ You can use Gemini to help you with various tasks in this project:
 *   "Implement a custom request handler in `common/simple_agent_handler.rs`."
 *   "Explain the A2A protocol integration in this project."
 *   "Write a test for the agent's message processing logic."
+*   "Refactor the `SimpleAgentHandler` to use a different storage backend."

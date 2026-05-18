@@ -4,16 +4,24 @@ This project is a minimal A2A (Agent-to-Agent) server agent implementation in Ru
 
 ## Project Overview
 
-`a2a-server-rust` is a sample application that demonstrates how to implement an A2A agent using the `a2a-rs` crate. It is designed to be deployed as a containerized application on Google Cloud Run and supports the A2A protocol for agentic communication.
+`a2a-server-rust` is a sample application that demonstrates how to implement an A2A agent using the `a2a-rs` crate (v0.2.0). It is designed to be deployed as a containerized application on Google Cloud Run and supports the A2A protocol for agentic communication.
 
 ### Key Technologies
 
 *   **Language:** [Rust](https://www.rust-lang.org/) (Edition 2024)
-*   **A2A Framework:** [a2a-rs](https://crates.io/crates/a2a-rs)
+*   **A2A Framework:** [a2a-rs](https://crates.io/crates/a2a-rs) (v0.2.0)
 *   **Async Runtime:** [Tokio](https://tokio.rs/)
 *   **Containerization:** [Docker](https://www.docker.com/)
 *   **Deployment:** [Google Cloud Run](https://cloud.google.com/run)
 *   **CI/CD:** [Google Cloud Build](https://cloud.google.com/build)
+
+## Features
+
+- **Standard A2A Endpoints:** Implements `/agentcard`, `/tasks`, and `/notifications`.
+- **Echo Skill:** A built-in skill that echoes back user messages.
+- **Task Management:** In-memory task storage and state management.
+- **Streaming Support:** Supports Server-Sent Events (SSE) for task status and artifact updates.
+- **Observability:** Integrated tracing and logging via `a2a-rs::observability`.
 
 ## Getting Started
 
@@ -48,6 +56,7 @@ The `Makefile` provides targets for common development tasks. Run `make help` to
 *   **Release Build:** `make release`
 *   **Run Locally:** `make start` (starts on port 8080)
 *   **Check Agent Card:** `make card` (requires local server running)
+*   **Update Dependencies:** `make update`
 
 ### Code Quality
 
@@ -77,3 +86,4 @@ After deployment, you can verify the remote service:
 *   **Get Endpoint:** `make endpoint`
 *   **Get Remote Agent Card:** `make card-remote`
 *   **Run Remote Tests:** `make test-remote`
+*   **Run Remote Echo Test:** `make a2a-remote`
