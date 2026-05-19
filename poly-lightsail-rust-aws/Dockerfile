@@ -1,5 +1,5 @@
 # Use a Rust image for building the application
-FROM rust:1.85-bookworm as builder
+FROM rust:1.95-bookworm as builder
 
 WORKDIR /app
 

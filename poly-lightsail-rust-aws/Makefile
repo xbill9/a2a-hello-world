@@ -54,7 +54,7 @@ status: lightsail-status
 		echo "OFFLINE"; \
 	fi
 	@echo -n "Remote (Cloud): "
-	@URL=$$(aws lightsail get-container-services --service-name $(LIGHTSAIL_SERVICE_NAME) --region $(AWS_REGION) --query 'containerServices[0].url' --output text 2>/dev/null); \
+	@URL=$$(aws lightsail get-container-services --service-name $(LIGHTSAIL_SERVICE_NAME) --region $(AWS_REGION) --query 'containerServices[0].url' --output text 2>/dev/null | sed 's|/$$||'); \
 	if [ -n "$$URL" ] && [ "$$URL" != "None" ]; then \
 		if curl -s -f $$URL/agentcard > /dev/null; then \
 			NAME=$$(curl -s $$URL/agentcard | python3 -c "import sys, json; print(json.load(sys.stdin).get('name', 'Unknown'))" 2>/dev/null || echo "Online"); \
@@ -93,7 +93,7 @@ card:
 # Get the remote agent card
 card-remote:
 	@echo "Fetching remote agent card..."
-	@URL=$$(aws lightsail get-container-services --service-name $(LIGHTSAIL_SERVICE_NAME) --region $(AWS_REGION) --query 'containerServices[0].url' --output text 2>/dev/null); \
+	@URL=$$(aws lightsail get-container-services --service-name $(LIGHTSAIL_SERVICE_NAME) --region $(AWS_REGION) --query 'containerServices[0].url' --output text 2>/dev/null | sed 's|/$$||'); \
 	if [ -n "$$URL" ] && [ "$$URL" != "None" ]; then \
 		if curl -s -f $$URL/agentcard > /dev/null; then \
 			curl -s $$URL/agentcard | python3 -m json.tool; \
