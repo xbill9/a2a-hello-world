@@ -7,6 +7,7 @@ AZ_ACR_NAME ?= a2aacr$(shell hostname | tr -cd '[:alnum:]' | tr '[:upper:]' '[:l
 AZ_CONTAINER_GROUP_NAME ?= a2a-container-$(shell hostname | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -c1-10)
 IMAGE_NAME ?= a2a-server-image
 IMAGE_TAG ?= $(shell git rev-parse --short HEAD 2>/dev/null || date +%s)
+DOCKER ?= docker
 
 # Derived Azure variables
 ACR_LOGIN_SERVER := $(AZ_ACR_NAME).azurecr.io
@@ -181,7 +182,7 @@ update:
 # Build the Docker image
 docker-build:
 	@echo "Building the Docker image..."
-	@docker build -t $(IMAGE_NAME) .
+	@$(DOCKER) build -t $(IMAGE_NAME) .
 
 # --- Azure CLI Targets ---
 
@@ -204,8 +205,8 @@ acr-login:
 
 push-acr: docker-build acr-create acr-login
 	@echo "Tagging and pushing the Docker image to ACR..."
-	@docker tag $(IMAGE_NAME) $(FULL_IMAGE_NAME)
-	@docker push $(FULL_IMAGE_NAME)
+	@$(DOCKER) tag $(IMAGE_NAME) $(FULL_IMAGE_NAME)
+	@$(DOCKER) push $(FULL_IMAGE_NAME)
 
 # --- Azure Container Instances (ACI) Deployment ---
 
