@@ -20,7 +20,7 @@ primecheck_agent = RemoteA2aAgent(
     name="primecheck_agent",
     description="This agent written in Go checks for primes",
     agent_card=(
-        f"http://127.0.0.1:8086/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8086/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
@@ -28,7 +28,7 @@ gen_agent = RemoteA2aAgent(
     name="primegenerator_agent",
     description="Prime Generation Agent written in JS",
     agent_card=(
-        f"http://127.0.0.1:8091/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8091/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
@@ -36,7 +36,7 @@ rand_agent = RemoteA2aAgent(
     name="rand_agent",
     description="Random Number Agent written in Python",
     agent_card=(
-        f"http://127.0.0.1:8087/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8087/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 

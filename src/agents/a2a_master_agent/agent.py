@@ -13,7 +13,7 @@ ev_agent = RemoteA2aAgent(
     name="events_agent",
     description="Events Agent",
     agent_card=(
-        f"http://127.0.0.1:8082/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8082/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
@@ -21,7 +21,7 @@ hw_agent = RemoteA2aAgent(
     name="helloworld_agent",
     description="Hello World Agent",
     agent_card=(
-        f"http://127.0.0.1:8083/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8083/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 
@@ -29,7 +29,7 @@ wt_agent = RemoteA2aAgent(
     name="weathertime_agent",
     description="Weather and Time Agent",
     agent_card=(
-        f"http://127.0.0.1:8084/{AGENT_CARD_WELL_KNOWN_PATH}"
+        f"http://localhost:8084/{AGENT_CARD_WELL_KNOWN_PATH}"
     ),
 )
 

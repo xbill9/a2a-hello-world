@@ -18,20 +18,27 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"google.golang.org/adk/agent"
+	"github.com/a2aproject/a2a-go/a2a"
+	"github.com/a2aproject/a2a-go/a2asrv"
 	"google.golang.org/adk/agent/llmagent"
-	"google.golang.org/adk/cmd/launcher"
-	"google.golang.org/adk/cmd/launcher/prod"
 	"google.golang.org/adk/model/gemini"
+	"google.golang.org/adk/runner"
+	"google.golang.org/adk/server/adka2a"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool"
 	"google.golang.org/adk/tool/functiontool"
 	"google.golang.org/genai"
 )
+
+// apiPath is where the JSON-RPC endpoint is served, matching the ADK launcher.
+const apiPath = "/a2a/invoke"
 
 // isPrime checks if a number is prime.
 func isPrime(n int) bool {
@@ -67,27 +74,6 @@ func checkPrimeTool(tc tool.Context, args checkPrimeToolArgs) (string, error) {
 	return fmt.Sprintf("%s are prime numbers.", strings.Join(primeStrings, ", ")), nil
 }
 
-// SingleAgentLoader is a simple implementation of agent.Loader for a single agent.
-type SingleAgentLoader struct {
-	Agent agent.Agent
-}
-
-func (l *SingleAgentLoader) LoadAgent(name string) (agent.Agent, error) {
-	if name == l.Agent.Name() {
-		return l.Agent, nil
-	}
-	return nil, fmt.Errorf("agent not found: %s", name)
-}
-
-func (l *SingleAgentLoader) ListAgents() []string {
-	return []string{l.Agent.Name()}
-}
-
-func (l *SingleAgentLoader) RootAgent() agent.Agent {
-	return l.Agent
-}
-
-// --8<-- [start:a2a-launcher]
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
@@ -129,40 +115,61 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create launcher.
-	l := prod.NewLauncher()
-
 	// Allow PORT to be set by the environment (e.g., Cloud Run), default to 8086
 	portStr := os.Getenv("PORT")
 	if portStr == "" {
 		portStr = "8086"
 	}
-	// Set PORT env var for the launcher to pick up
-	os.Setenv("PORT", portStr)
 
-	// Create ADK config
-	config := &launcher.Config{
-		AgentLoader:    &SingleAgentLoader{Agent: primeAgent},
-		SessionService: session.InMemoryService(),
+	// URL advertised in the agent card. ADK's RemoteA2aAgent only accepts plain
+	// http on a loopback host (0.0.0.0 is rejected), so default to localhost.
+	agentURL := os.Getenv("A2A_AGENT_URL")
+	if agentURL == "" {
+		agentURL = "http://localhost:" + portStr
+	}
+	publicURL, err := url.JoinPath(agentURL, apiPath)
+	if err != nil {
+		slog.Error("Invalid A2A_AGENT_URL", "url", agentURL, "error", err)
+		os.Exit(1)
 	}
 
-	slog.Info("Starting A2A prime checker server", "port", portStr)
-
-	// Arguments for the launcher.
-	// Note: ParseAndRun usually expects the first argument to be the program name if it parses full os.Args,
-	// but here we are constructing args manually.
-	// If full launcher uses standard flag parsing, it might expect the command "a2a" as a subcommand.
-	args := []string{
-		"--port", portStr,
-		"a2a",
-		"--a2a_agent_url", "http://0.0.0.0:" + portStr,
+	// The card is built here rather than by the ADK launcher so it can declare
+	// ProtocolVersion. a2a-go serves A2A v0.3 JSON-RPC (message/send); without a
+	// declared version, a2a-sdk 1.x clients such as the Python ADK masters
+	// assume v1.0 and call SendMessage, which this server rejects.
+	agentCard := &a2a.AgentCard{
+		Name:               primeAgent.Name(),
+		Description:        primeAgent.Description(),
+		ProtocolVersion:    "0.3.0",
+		DefaultInputModes:  []string{"text/plain"},
+		DefaultOutputModes: []string{"text/plain"},
+		URL:                publicURL,
+		PreferredTransport: a2a.TransportProtocolJSONRPC,
+		Skills:             adka2a.BuildAgentSkills(primeAgent),
+		Capabilities:       a2a.AgentCapabilities{Streaming: true},
 	}
 
-	// Run launcher
-	if err := l.Execute(ctx, config, args); err != nil {
-		slog.Error("launcher.Run() error", "error", err)
+	executor := adka2a.NewExecutor(adka2a.ExecutorConfig{
+		RunnerConfig: runner.Config{
+			AppName:        primeAgent.Name(),
+			Agent:          primeAgent,
+			SessionService: session.InMemoryService(),
+		},
+	})
+
+	mux := http.NewServeMux()
+	mux.Handle(a2asrv.WellKnownAgentCardPath, a2asrv.NewStaticAgentCardHandler(agentCard))
+	mux.Handle(apiPath, a2asrv.NewJSONRPCHandler(a2asrv.NewHandler(executor)))
+
+	server := &http.Server{
+		Addr:              ":" + portStr,
+		Handler:           mux,
+		ReadHeaderTimeout: 15 * time.Second,
+	}
+
+	slog.Info("Starting A2A prime checker server", "port", portStr, "card_url", publicURL)
+	if err := server.ListenAndServe(); err != nil {
+		slog.Error("A2A server stopped", "error", err)
 		os.Exit(1)
 	}
 }
-
-// --8<-- [end:a2a-launcher]

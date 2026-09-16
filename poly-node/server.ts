@@ -17,7 +17,9 @@ const primeAgentCard: AgentCard = {
   description: "A simple agent that generates a prime number.",
   protocolVersion: "0.3.0",
   version: "0.1.0",
-  url: "http://0.0.0.0:8091/", // The public URL of your agent server
+  // The public URL of your agent server. ADK masters only accept plain http on
+  // a loopback host (0.0.0.0 is rejected), so default to localhost.
+  url: process.env.A2A_AGENT_URL ?? "http://localhost:8091/",
   skills: [ { id: "generate-prime", name: "Generate Prime", description: "Generate a prime number", tags: ["math"] } ],
   capabilities: {},
   defaultInputModes: [],
